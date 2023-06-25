@@ -1,8 +1,9 @@
 import argparse
 import os
-from dotenv import load_dotenv
-import pandas as pd
+
 import deepl
+import pandas as pd
+from dotenv import load_dotenv
 
 load_dotenv()
 
