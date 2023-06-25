@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 
 import deepl
 import pandas as pd
@@ -65,9 +66,12 @@ def main():
     column_name = args["column_name"]
     max_lines = args["max_lines"]
 
+    input_path_or_buf = input_file_path if sys.stdin.isatty() else sys.stdin
+    output_path_or_buf = output_file_path if sys.stdout.isatty() else sys.stdout
+
     try:
         # 欠損している場所はからの文字列として扱う方が後のコードが単純になる
-        df = pd.read_csv(input_file_path).fillna("")
+        df = pd.read_csv(input_path_or_buf).fillna("")
     except FileNotFoundError:
         print(f"{input_file_path}というファイルは存在しません。")
         exit(0)
@@ -90,13 +94,14 @@ def main():
     insert_loc = df.columns.get_loc(column_name) + 1
     df.insert(insert_loc, f"{column_name} (和訳)", translated_text_list)
 
-    if os.path.isfile(output_file_path):
+    if sys.stdout.isatty() and os.path.isfile(output_file_path):
         do_overwrite = ask_overwriting(output_file_path)
         if not do_overwrite:
             output_file_path = get_alt_file_path(output_file_path)
     try:
-        df.to_csv(output_file_path, index=False)
-        print(f"{output_file_path}に保存しました。")
+        df.to_csv(output_path_or_buf, index=False)
+        if sys.stdout.isatty():
+            print(f"{output_file_path}に保存しました。")
     except Exception as e:
         print(e)
         exit(0)
