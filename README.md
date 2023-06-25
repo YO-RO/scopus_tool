@@ -8,6 +8,9 @@ Scopusからエクスポートした論文一覧のCSVファイルを分析し�
 - [x] 翻訳
 - [ ] キーワード一覧の作成
 - [ ] コマンドの連結
+    - [ ] フィルター
+    - [x] 翻訳
+    - [ ] キーワード一覧の作成
 - [ ] 英語で出力されたCSVファイルへの対応
 - [ ] WindowsとLinuxでの動作
 
@@ -78,9 +81,19 @@ python3 -m scopus_tool.collect_keywords -i {input_file_path}
 
 ## コマンドの連結
 
+パイプでCSVを読み込む場合は`-i`は無視される。また、パイプで出力する場合は`-o`は無視される。
+
+```shell
+# `-i list2.csv`は無視される
+cat list.csv | python3 -m scopus_tool.translate -i list2.csv
+
+# `-o output.csv`は無視される
+python3 -m scopus_tool.translate -i list.csv -o output.csv | cat
+```
+
 フィルターを実行した後に翻訳を実行する例
 
 ```shell
-python3 -m scopus_tool.filter -i ./list.csv -o s "requirements engineering AND (nlp OR llm)" | \
-python3 -m scopus_tool.translate -i s
+python3 -m scopus_tool.filter -i ./list.csv "requirements engineering AND (nlp OR llm)" | \
+python3 -m scopus_tool.translate -m 3
 ```
