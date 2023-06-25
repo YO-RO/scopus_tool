@@ -1,4 +1,4 @@
-# Scopus-tool
+# spt
 
 Scopusからエクスポートした論文一覧のCSVファイルを分析して、翻訳の追加などをできるソフトウェア。現時点ではMacでしか動作確認はしていません。
 
@@ -25,13 +25,13 @@ rye sync
 Scopusで「requirements engineering」とキーワード検索しても、「requirements」と「engineering」を含むだけの論文も引っかかる。この機能ではより厳格なキーワード検索ができる。
 
 ```shell
-python3 -m scopus_tool.filter -i {input_file_path} {condition}
+python3 -m spt.filter -i {input_file_path} {condition}
 ```
 
 たとえば
 
 ```shell
-python3 -m scopus_tool.filter -i ./list.csv "requirements engineering AND (nlp OR llm)
+python3 -m spt.filter -i ./list.csv "requirements engineering AND (nlp OR llm)
 ```
 
 #### Args, Flags
@@ -56,7 +56,7 @@ DEEPL_API_KEY={API_KEY}
 
 
 ```shell
-python3 -m scopus_tool.translate -i {input_file_path}
+python3 -m spt.translate -i {input_file_path}
 ```
 
 #### Flags
@@ -71,7 +71,7 @@ python3 -m scopus_tool.translate -i {input_file_path}
 キーワードと指定された回数の一覧を作成できる。
 
 ```shell
-python3 -m scopus_tool.collect_keywords -i {input_file_path}
+python3 -m spt.collect_keywords -i {input_file_path}
 ```
 
 #### Flags
@@ -85,15 +85,15 @@ python3 -m scopus_tool.collect_keywords -i {input_file_path}
 
 ```shell
 # `-i list2.csv`は無視される
-cat list.csv | python3 -m scopus_tool.translate -i list2.csv
+cat list.csv | python3 -m spt.translate -i list2.csv
 
 # `-o output.csv`は無視される
-python3 -m scopus_tool.translate -i list.csv -o output.csv | cat
+python3 -m spt.translate -i list.csv -o output.csv | cat
 ```
 
 フィルターを実行した後に翻訳を実行する例
 
 ```shell
-python3 -m scopus_tool.filter -i ./list.csv "requirements engineering AND (nlp OR llm)" | \
-python3 -m scopus_tool.translate -m 3
+python3 -m spt.filter -i ./list.csv "requirements engineering AND (nlp OR llm)" | \
+python3 -m spt.translate -m 3
 ```

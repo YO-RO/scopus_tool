@@ -1,5 +1,5 @@
 [project]
-name = "scopus-tool"
+name = "spt"
 version = "0.1.0"
 description = "Add a short description here"
 authors = [
