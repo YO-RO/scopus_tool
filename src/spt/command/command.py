@@ -16,16 +16,20 @@ class Command(metaclass=abc.ABCMeta):
     def _read(self) -> pd.DataFrame:
         return self._reader.perform_read()
 
-    def _write(self, df: pd.DataFrame) -> None:
-        self._writer.perform_write(df)
+    def _write(self, df: pd.DataFrame) -> str | None:
+        return self._writer.perform_write(df)
 
     @abc.abstractmethod
     def _process_data_frame(self, df: pd.DataFrame) -> pd.DataFrame:
         """個々のコマンドで行われるDataFrameの加工はここに書く"""
         raise NotImplementedError()
 
-    def execute(self) -> None:
-        """コマンドを実行するためのメソッド"""
+    def execute(self) -> str | None:
+        """コマンドを実行するためのメソッド
+
+        Returns:
+            str | None: ファイルに書き出したのならファイルパスを返す。そうでなければNoneを返す。
+        """
         df = self._read()
         df = self._process_data_frame(df)
-        self._write(df)
+        return self._write(df)

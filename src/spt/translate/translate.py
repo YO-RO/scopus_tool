@@ -6,6 +6,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from ..command import Command, FileCsvReader, FileCsvWriter, IReader, IWriter, StdinCsvReader, StdoutCsvWriter
+from ..exceptions import AuthorizationException
 from .translator import DeeplTranslator, ITranslator
 
 load_dotenv()
@@ -20,7 +21,7 @@ class TranslationCommand(Command):
         column_name: str,
         max_lines: int | None,
     ) -> None:
-        assert max_lines is None or max_lines >= 1, "max_linesは1以上を指定する必要がある"
+        assert max_lines is None or max_lines >= 1, f"max_linesは1以上を指定する必要がある。指定された値: {max_lines}"
 
         super().__init__(reader, writer)
         self.translator = translator
@@ -34,11 +35,12 @@ class TranslationCommand(Command):
         if self.max_lines is not None and len(df) > self.max_lines:
             df.drop(df.index[[i for i in range(self.max_lines, len(df))]], inplace=True)
 
-        if not self.column_name in df.columns:
-            sys.stderr.write(f"{self.column_name}という行は存在しません")
-            exit(1)
-        source_text_list = df[self.column_name].tolist()
-        translated_text_list = self.translator.translate_text(source_text_list)
+        try:
+            source_text_list = df[self.column_name].tolist()
+            translated_text_list = self.translator.translate_text(source_text_list)
+        except KeyError as e:
+            e.strerror = f"{self.column_name}という列は存在しません"
+            raise
 
         insert_loc = df.columns.get_loc(self.column_name) + 1
         df.insert(insert_loc, f"{self.column_name} (和訳)", translated_text_list)
@@ -62,11 +64,7 @@ def get_args():
     input_file_path = default_input_file_path if args.input_file_path is None else args.input_file_path
     output_file_path = default_output_file_path if args.output_file_path is None else args.output_file_path
     column_name = default_column_name if args.column is None else args.column
-    max_lines: int | None = args.max_lines
-
-    if max_lines is not None and max_lines < 1:
-        sys.stderr.write("--max-linesは1以上を指定してください。")
-        exit(1)
+    max_lines: int | None = args.max_lines if args.max_lines >= 1 else None
 
     return {
         "input_file_path": input_file_path,
@@ -86,9 +84,26 @@ def main():
     reader = FileCsvReader(input_file_path) if sys.stdin.isatty() else StdinCsvReader()
     writer = FileCsvWriter(output_file_path) if sys.stdout.isatty() else StdoutCsvWriter()
     translator = DeeplTranslator()
-
     translation_command = TranslationCommand(reader, writer, translator, column_name, max_lines)
-    translation_command.execute()
+
+    try:
+        # ファイルに出力されたら、出力されたファイルのパスが戻り値としてくる。stdoutとかならNone。
+        final_output_file_path: str | None = translation_command.execute()
+    except FileNotFoundError as e:
+        sys.stderr.write(e.strerror)
+        exit(1)
+    except KeyError as e:
+        sys.stderr.write(e.strerror)
+        exit(1)
+    except ConnectionError as e:
+        sys.stderr.write(e.strerror)
+        exit(1)
+    except AuthorizationException as e:
+        sys.stderr.write(e.strerror)
+        exit(1)
+
+    if final_output_file_path is not None:
+        sys.stdout.write(f"{final_output_file_path}に保存しました。")
 
 
 if __name__ == "__main__":

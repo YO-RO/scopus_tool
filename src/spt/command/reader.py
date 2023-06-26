@@ -22,7 +22,8 @@ class FileCsvReader(IReader):
         self.input_file_path = input_file_path
 
     def perform_read(self) -> pd.DataFrame:
-        if not os.path.isfile(self.input_file_path):
-            sys.stderr.write(f"{self.input_file_path}というファイルは存在しません。")
-            exit(1)
-        return pd.read_csv(self.input_file_path)
+        try:
+            return pd.read_csv(self.input_file_path)
+        except FileNotFoundError as e:
+            e.strerror = f"{self.input_file_path}というファイルは存在しません。"
+            raise
